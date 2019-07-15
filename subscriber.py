@@ -1,6 +1,7 @@
 import os
 import time 
 import json
+from textblob import TextBlob
 from google.cloud import pubsub_v1
 from dotenv import load_dotenv
 load_dotenv()
@@ -24,9 +25,14 @@ subscription_name = 'projects/{project_id}/subscriptions/{sub}'.format(
 def callback(message):
     data = json.loads(message.data.decode("utf-8"))
 
-    print(message.data)
-    message.ack()
+    testimonial = TextBlob(data['body'])
+    polarity = testimonial.sentiment.polarity 
 
+    if polarity < -0.8 or polarity > 0.8:
+        print(testimonial, polarity)
+
+    message.ack()
+ 
 while True:
     #### for every message the subscriber receives it will call the function "callback"
     future = subscriber.subscribe(subscription_name, callback)
